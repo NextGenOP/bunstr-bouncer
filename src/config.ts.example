@@ -1,0 +1,85 @@
+
+interface HTTPSOptions {
+    privKey: string;
+    certificate: string;
+    ticketKey: string;
+}
+interface ServerMeta{
+    contact: string;
+    pubkey: string;
+    description: string;
+    name: string;
+    software: string;
+    supported_nips: number[];
+}
+interface Config {
+    address: string;
+    port: string;
+    https?: HTTPSOptions;
+    clusters: number;
+    idle_sessions: number;
+    log_about_relays: boolean;
+    perMessageDeflate: boolean;
+    noscraper: boolean;
+    reconnect_time: number;
+    upstream_ratelimit_expiration: number;
+    max_client_subs: number;
+    max_known_events: number;
+    wait_eose: boolean;
+    pause_on_limit: boolean;
+    max_eose_score: number;
+    authorized_keys: string[];
+    allowed_publishers: string[];
+    blocked_publishers: string[];
+    blocked_hosts: string[];
+    private_keys: Record<string, string>;
+    server_meta: ServerMeta;
+    favicon: string;
+    relays: string[];
+    cache_relays: string[];
+    loadbalancer: string[];
+}
+
+const config: Config = {
+    address: "0.0.0.0", // Listening address
+    port: "8080", // Listening port
+    https: { 
+        privKey: "",
+        certificate: "",
+        ticketKey: ""
+    },
+    clusters: 1, 
+    idle_sessions: 1,
+    log_about_relays: false,
+    perMessageDeflate: true,
+    noscraper: false,
+    reconnect_time: 5000,
+    upstream_ratelimit_expiration: 10000,
+    max_client_subs: -1,
+    max_known_events: 5000,
+    wait_eose: true,
+    pause_on_limit: false,
+    max_eose_score: 0,
+    authorized_keys: [],
+    allowed_publishers: [],
+    blocked_publishers: [],
+    blocked_hosts: [],
+    private_keys: {},
+    server_meta: {
+        contact: "unset",
+        pubkey: "0000000000000000000000000000000000000000000000000000000000000000",
+        description: "A fast Nostr bouncer written in Bun. ",
+        name: "bunstr",
+        software: "git+https://github.com/NextGenOP/bunstr-bouncer",
+        supported_nips: [1, 2, 9, 11, 12, 15, 16, 20, 22, 33, 40, 42, 50],
+    },
+    favicon: "",
+    relays: [
+        "wss://example1.com",
+        "wss://example2.com",
+    ],
+    cache_relays: [],
+    loadbalancer: []
+};
+
+export default config;

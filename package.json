@@ -1,0 +1,34 @@
+{
+  "name": "bunstr",
+  "version": "0.1",
+  "author": "NextGenOP",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/NextGenOP/bunstr-bouncer.git"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "nostr-tools": "^2.5.2"
+  },
+  "bin": {
+    "bostr": "bostr_cli.js"
+  },
+  "bugs": {
+    "url": "https://github.com/NextGenOP/bunstr-bouncer/issues"
+  },
+  "description": "A fast Nostr bouncer written in Bun. ",
+  "engines": {
+    "bun": ">=1"
+  },
+  "homepage": "https://github.com/NextGenOP/bunstr-bouncer#readme",
+  "keywords": [
+    "nostr",
+    "bouncer",
+    "websocket",
+    "proxy"
+  ],
+  "license": "GNU AGPL v3",
+  "devDependencies": {
+    "@types/bun": "^1.1.2"
+  }
+}

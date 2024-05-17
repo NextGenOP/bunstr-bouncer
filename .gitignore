@@ -1,0 +1,6 @@
+.vscode/
+bun.lockb
+node_modules/
+src/config.ts
+src/config.js
+
