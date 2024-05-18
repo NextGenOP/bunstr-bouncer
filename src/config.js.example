@@ -13,7 +13,9 @@ module.exports = {
     https: {
       privKey: "",
       certificate: "",
-      ticketKey: ""
+      ticketKey: "",
+      passphrase: "",
+      dhParams: ""
     },
   
     // Clusters (default: 1)

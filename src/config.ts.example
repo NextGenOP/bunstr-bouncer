@@ -3,6 +3,8 @@ interface HTTPSOptions {
     privKey: string;
     certificate: string;
     ticketKey: string;
+    passphrase: string;
+    dhParams: string;
 }
 interface ServerMeta{
     contact: string;
@@ -46,7 +48,9 @@ const config: Config = {
     https: { 
         privKey: "",
         certificate: "",
-        ticketKey: ""
+        ticketKey: "",
+        passphrase: "",
+        dhParams: ""
     },
     clusters: 1, 
     idle_sessions: 1,
