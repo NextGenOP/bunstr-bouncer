@@ -41,8 +41,9 @@ if (config.loadbalancer.length) {
 }
 
 const server = Bun.serve({
+  hostname: config.address,
   port: config.port,
-  fetch(req: Request, server: Server): Response | Promise<Response> | undefined {
+  fetch(req, server): Response | Promise<Response> | undefined {
     const url = new URL(req.url);
     const serverAddr: string = `${
       req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") ??
@@ -57,7 +58,7 @@ const server = Bun.serve({
       });
     }
     if (url.pathname === "/") {
-      let info: string =
+      const info: string =
         "This is nostr bouncer relay.\n" +
         `Connect with: ${serverAddr}\n` +
         fetchedInfo;
@@ -74,12 +75,22 @@ const server = Bun.serve({
     }
     return new Response("Not found", { status: 404 });
   },
-  bouncer,
+  websocket: {
+    open(ws) {
+      bouncer.handleOpen(ws);
+    },
+    message(ws, message) {
+      bouncer.handleMessage(ws, message);
+    },
+    close(ws, code, message) {
+      bouncer.handleClose(ws, code, message);
+    }
+  },
   ...(useSSL
     ? {
         tls: {
-          cert: config.https?.certificate,
-          key: config.https?.privKey,
+          cert: Bun.file((config.https?.certificate ?? "")),
+          key: Bun.file((config.https?.privKey ?? "")),
           passphrase: config.https?.passphrase,
           dhParamsFile: config.https?.dhParams,
         },
