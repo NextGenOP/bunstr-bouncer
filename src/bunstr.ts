@@ -17,16 +17,17 @@ if (config.relays.length) {
   fetchedInfo += "\n";
 }
 if (config.loadbalancer.length) {
-  // console.log("Fetching relay list from...",
-  //             config.loadbalancer[0]?.replace(/^ws/, "http"));
-  let res = await fetch(config.loadbalancer[0]?.replace(/^ws/, "http"), {
-    method: "GET",
-    headers: {
-      "User-Agent": "bunstr/0.1",
-    },
-  }).then((r) => r.text());
-  const matches = res.matchAll(wsUrlRegex);
-  const relayList = [...matches].map((m) => m[1]);
+  let relayList = new Set()
+  for (const loadbalancerUrl of config.loadbalancer) {
+    try {
+      const res = await fetch(loadbalancerUrl.replace(/^ws/, "http"));
+      const resText = await res.text();
+      const matches = [...resText.matchAll(wsUrlRegex)];
+      matches.forEach((m) => relayList.add(m[1]));
+    } catch (err) {
+      console.error(`Error fetching relays from ${loadbalancerUrl}: ${err}`);
+    }
+  }
 
   fetchedInfo += "Load Balance:\n";
   config.loadbalancer.forEach((r) => {
@@ -34,9 +35,9 @@ if (config.loadbalancer.length) {
   });
   fetchedInfo += "\n";
 
-  fetchedInfo += relayList.length
+  fetchedInfo += relayList.size
     ? "Load balance connected to Relays:\n"
-    : "No Relays Connected through Load balance";
+    : "No Relays Connected through Load balance\n";
   relayList.forEach((r) => {
     fetchedInfo += `${r}\n`;
   });
