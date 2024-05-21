@@ -70,7 +70,7 @@ const server = Bun.serve({
     }
     if (url.pathname.includes('favicon')) return new Response(favicon, { headers: { "Content-Type": "image/" + config.favicon?.split(".").pop() }});
     const query = querystring.parse(req.url.slice(2))
-    if (server.upgrade(req, { data: query})) {
+    if (server.upgrade(req, { data: {query: query}})) {
       // const ip =
       //   req.headers["x-forwarded-for"]?.split(",")[0] || server.requestIP(req);
       // if (config.blocked_hosts && config.blocked_hosts.includes(ip)) {
