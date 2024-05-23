@@ -52,7 +52,7 @@ const server = Bun.serve({
       req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") ??
       url.protocol.replace(/http/i, "ws").slice(0, -1)
     }://${req.headers["x-forwarded-host"] ?? url.host}`;
-    if (req.headers["Accept"] === "application/nostr+json") {
+    if (req.headers["accept"] === "application/nostr+json") {
       return new Response(JSON.stringify(config.server_meta), {
         headers: {
           "Content-Type": "application/json",
@@ -70,7 +70,7 @@ const server = Bun.serve({
     }
     if (url.pathname.includes('favicon')) return new Response(favicon, { headers: { "Content-Type": "image/" + config.favicon?.split(".").pop() }});
     const query = querystring.parse(req.url.slice(2))
-    if (server.upgrade(req, { data: {query: query}})) {
+    if (server.upgrade(req, { data: {query: query, host: req.headers["host"]}})) {
       // const ip =
       //   req.headers["x-forwarded-for"]?.split(",")[0] || server.requestIP(req);
       // if (config.blocked_hosts && config.blocked_hosts.includes(ip)) {
@@ -86,7 +86,7 @@ const server = Bun.serve({
       bouncer.handleOpen(ws);
     },
     message(ws, message) {
-      bouncer.handleMessage(ws, message);
+      bouncer.handleMessage(ws, message: string);
     },
     close(ws, code, message) {
       bouncer.handleClose(ws, code, message);
