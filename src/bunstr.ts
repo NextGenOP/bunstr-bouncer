@@ -85,8 +85,8 @@ const server = Bun.serve({
       if (blockedIP.has(ws.remoteAddress)) ws.close(1008, "");
       bouncer.handleOpen(ws);
     },
-    message(ws, message) {
-      bouncer.handleMessage(ws, message: string);
+    message(ws, message: string) {
+      bouncer.handleMessage(ws, message);
     },
     close(ws, code, message) {
       bouncer.handleClose(ws, code, message);
