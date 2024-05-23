@@ -5,6 +5,7 @@ import {
   decodenpubKeysFromRecord,
 } from "./util/decodenpubKeys";
 import auth from "./util/auth";
+import type { ServerWebSocket } from "bun";
 
 const authorized_keys: string[] = decodenpubKeys(config.authorized_keys);
 const allowed_publishers: string[] = decodenpubKeys(config.allowed_publishers);
