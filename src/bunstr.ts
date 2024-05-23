@@ -1,9 +1,11 @@
+import type { ServerWebSocket } from "bun";
+import querystring from "querystring";
+import bouncer from "./bouncer";
 import config from "./config.ts";
-import bouncer from "./bouncer"
-import querystring from 'querystring'
+import type { WSData } from "./lib/bunstrtype.ts";
 
 const useSSL = config.https?.privKey !== "" && config.https?.certificate !== "";
-const favicon = config.favicon ? Bun.file(config.favicon) : ""
+const favicon = config.favicon ? Bun.file(config.favicon) : "";
 const blockedIP = new Set(config.blocked_hosts);
 const wsUrlRegex = /(?:^- )(wss?:\/\/[^\s]+)/gm;
 
@@ -17,7 +19,7 @@ if (config.relays.length) {
   fetchedInfo += "\n";
 }
 if (config.loadbalancer.length) {
-  let relayList = new Set()
+  let relayList = new Set();
   for (const loadbalancerUrl of config.loadbalancer) {
     try {
       const res = await fetch(loadbalancerUrl.replace(/^ws/, "http"));
@@ -49,10 +51,10 @@ const server = Bun.serve({
   fetch(req, server): Response | Promise<Response> | undefined {
     const url = new URL(req.url);
     const serverAddr: string = `${
-      req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") ??
+      req.headers.get("x-forwarded-proto")?.replace(/http/i, "ws") ??
       url.protocol.replace(/http/i, "ws").slice(0, -1)
-    }://${req.headers["x-forwarded-host"] ?? url.host}`;
-    if (req.headers["accept"] === "application/nostr+json") {
+    }://${req.headers.get("x-forwarded-host") ?? url.host}`;
+    if (req.headers.get("accept") === "application/nostr+json") {
       return new Response(JSON.stringify(config.server_meta), {
         headers: {
           "Content-Type": "application/json",
@@ -68,35 +70,44 @@ const server = Bun.serve({
 
       return new Response(info, { headers: { "Content-Type": "text/plain" } });
     }
-    if (url.pathname.includes('favicon')) return new Response(favicon, { headers: { "Content-Type": "image/" + config.favicon?.split(".").pop() }});
-    const query = querystring.parse(req.url.slice(2))
-    if (server.upgrade(req, { data: {query: query, host: req.headers["host"]}})) {
+    if (url.pathname.includes("favicon"))
+      return new Response(favicon, {
+        headers: {
+          "Content-Type": "image/" + config.favicon?.split(".").pop(),
+        },
+      });
+    const query = querystring.parse(url.search.slice(1));
+    if (
+      server.upgrade(req, {
+        data: { query: query, host: req.headers.get("host") },
+      })
+    ) {
       // const ip =
       //   req.headers["x-forwarded-for"]?.split(",")[0] || server.requestIP(req);
       // if (config.blocked_hosts && config.blocked_hosts.includes(ip)) {
       //   return new Response("Blocked", { status: 403 });
       // }
-      return
+      return;
     }
     return new Response("Not found", { status: 404 });
   },
   websocket: {
-    open(ws) {
+    open(ws: ServerWebSocket<WSData>) {
       if (blockedIP.has(ws.remoteAddress)) ws.close(1008, "");
       bouncer.handleOpen(ws);
     },
-    message(ws, message: string) {
+    message(ws: ServerWebSocket<WSData>, message: string) {
       bouncer.handleMessage(ws, message);
     },
-    close(ws, code, message) {
+    close(ws: ServerWebSocket<WSData>, code, message: string) {
       bouncer.handleClose(ws, code, message);
-    }
+    },
   },
   ...(useSSL
     ? {
         tls: {
-          cert: Bun.file((config.https?.certificate ?? "")),
-          key: Bun.file((config.https?.privKey ?? "")),
+          cert: Bun.file(config.https?.certificate ?? ""),
+          key: Bun.file(config.https?.privKey ?? ""),
           passphrase: config.https?.passphrase,
           dhParamsFile: config.https?.dhParams,
         },
