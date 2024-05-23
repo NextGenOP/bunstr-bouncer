@@ -1,11 +1,12 @@
-import config from "./config";
+import type { ServerWebSocket } from "bun";
 import { validateEvent } from "nostr-tools";
+import config from "./config";
+import type { WSData } from "./lib/bunstrtype";
+import auth from "./util/auth";
 import {
   decodenpubKeys,
   decodenpubKeysFromRecord,
 } from "./util/decodenpubKeys";
-import auth from "./util/auth";
-import type { ServerWebSocket } from "bun";
 
 const authorized_keys: string[] = decodenpubKeys(config.authorized_keys);
 const allowed_publishers: string[] = decodenpubKeys(config.allowed_publishers);
@@ -28,19 +29,26 @@ worker.onmessage = (event) => {
   }
 };
 
-let csess: Record<string, ServerWebSocket> = {};
+let csess: Record<string, ServerWebSocket<WSData>> = {};
 
-function parseQueryArray(query: string): number[] {
-  return query?.split(",").map((item: string) => parseInt(item));
+function getLastArray(arr: string | string[] | undefined): string | undefined {
+  return typeof arr === "string" ? arr : arr?.[arr.length - 1];
+}
+function parseQuerytoArray(
+  query: string | string[] | undefined
+): number[] | undefined {
+  return Array.isArray(query)
+    ? query.map((item: string) => parseInt(item))
+    : query?.split(",").map((item: string) => parseInt(item));
 }
 
 const bouncer = {
-  handleOpen: (ws: ServerWebSocket<unknown>) => {
-    ws.data.reject = parseQueryArray(ws.data?.query.reject);
-    ws.data.accept = parseQueryArray(ws.data?.query.accept);
-    ws.data.limit = parseInt(ws.data?.limit);
-    ws.data.accurate = ws.data?.query.accurate === 1 ? true : false;
-    ws.data.saveData = ws.data?.query.save === 1 ? true : false;
+  handleOpen: (ws: ServerWebSocket<WSData>) => {
+    ws.data.reject = parseQuerytoArray(ws.data?.query.reject);
+    ws.data.accept = parseQuerytoArray(ws.data?.query.accept);
+    ws.data.limit = parseInt(getLastArray(ws.data?.query.limit) ?? "");
+    ws.data.accurate = ws.data?.query.accurate === "1" ? true : undefined;
+    ws.data.saveData = ws.data?.query.save === "1" ? true : undefined;
     ws.data.id = Date.now() + Math.random().toString(36);
     ws.data.authorized = true;
 
@@ -56,7 +64,7 @@ const bouncer = {
     } else if (Object.keys(private_keys?.length))
       ws.send(JSON.stringify(["AUTH", ws.data.id]));
   },
-  handleMessage: (ws: ServerWebSocket<unknown>, message_json: string) => {
+  handleMessage: (ws: ServerWebSocket<WSData>, message_json: string) => {
     try {
       const message = JSON.parse(message_json);
       switch (message[0]) {
@@ -129,10 +137,10 @@ const bouncer = {
           break;
         case "AUTH":
           if (auth(ws.data.id, message[1], ws)) {
-            ws.pubkey = message[1].pubkey;
+            ws.data.pubkey = message[1].pubkey;
             console.log(
-              `${ws.ip} is authorized as  ${ws.pubkey} ${
-                private_keys[ws.pubkey] ? "(admin)" : "(user)"
+              `${ws.remoteAddress} is authorized as  ${ws.data.pubkey} ${
+                private_keys[ws.data.pubkey] ? "(admin)" : "(user)"
               }`
             );
             if (ws.data.authorized) return;
@@ -143,7 +151,7 @@ const bouncer = {
           ws.send(
             JSON.stringify([
               "NOTICE",
-              `error: unrecognized command: ${data[0]}`,
+              `error: unrecognized command: ${message[0]}`,
             ])
           );
           break;
@@ -157,7 +165,7 @@ const bouncer = {
       ws.send(errorInvalid);
     }
   },
-  handleClose: (ws: ServerWebSocket<unknown>, code: number, reason: string) => {
+  handleClose: (ws: ServerWebSocket<WSData>, code: number, reason: string) => {
     console.log(`${ws.remoteAddress} disconnected (${code}), ${reason}`);
     delete csess[ws.data.id];
     worker.postMessage({
