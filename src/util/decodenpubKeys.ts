@@ -22,7 +22,7 @@ export function decodenpubKeysFromRecord(
   return Object.keys(dict)
     .map((key) => key.startsWith("npub") ? (nip19.decode(key).data as string) : key
     )
-    .reduce((obj, key) => {
+    .reduce((obj: Record<string, string>, key) => {
       obj[key] = obj[key];
       return obj;
     }, {});
