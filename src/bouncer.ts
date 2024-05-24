@@ -4,13 +4,19 @@ import config from "./config";
 import type { WSData } from "./lib/bunstrtype";
 import auth from "./util/auth";
 import {
-  decodenpubKeys,
+  decodenpubKeysFromArray,
   decodenpubKeysFromRecord,
-} from "./util/decodenpubKeys";
+} from "./util/decodeKeys";
 
-const authorized_keys: string[] = decodenpubKeys(config.authorized_keys);
-const allowed_publishers: string[] = decodenpubKeys(config.allowed_publishers);
-const blocked_publishers: string[] = decodenpubKeys(config.blocked_publishers);
+const authorized_keys: string[] = decodenpubKeysFromArray(
+  config.authorized_keys
+);
+const allowed_publishers: string[] = decodenpubKeysFromArray(
+  config.allowed_publishers
+);
+const blocked_publishers: string[] = decodenpubKeysFromArray(
+  config.blocked_publishers
+);
 const private_keys: Record<string, string> = decodenpubKeysFromRecord(
   config.private_keys
 );

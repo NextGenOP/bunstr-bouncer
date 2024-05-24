@@ -1,11 +1,14 @@
 import { validateEvent, verifyEvent, nip19 } from "nostr-tools";
 import config from "../config";
-import { decodenpubKeys, decodenpubKeysFromRecord } from "./decodenpubKeys";
+import {
+  decodenpubKeysFromArray,
+  decodenpubKeysFromRecord,
+} from "./decodeKeys";
 import type { ServerWebSocket } from "bun";
-import type { Event } from "nostr-tools"
+import type { Event } from "nostr-tools";
 import type { WSData } from "../lib/bunstrtype";
 
-const authorizedKeys = decodenpubKeys(config.authorized_keys);
+const authorizedKeys = decodenpubKeysFromArray(config.authorized_keys);
 const privateKeys = decodenpubKeysFromRecord(config.private_keys);
 
 /**
@@ -15,10 +18,18 @@ const privateKeys = decodenpubKeysFromRecord(config.private_keys);
  * @param {ServerWebSocket<WSData>} ws - The ServerWebSocket object.
  * @returns {boolean} Returns true if authentication succeeds, otherwise false.
  */
-export function auth(authKey: string, data: Event, ws: ServerWebSocket<WSData>) {
+export function auth(
+  authKey: string,
+  data: Event,
+  ws: ServerWebSocket<WSData>
+) {
   try {
     // Check if authorized_keys, private_keys are empty and noscraper flag is set
-    if (!authorizedKeys.length && !Object.keys(privateKeys).length && !config.noscraper)
+    if (
+      !authorizedKeys.length &&
+      !Object.keys(privateKeys).length &&
+      !config.noscraper
+    )
       return false;
 
     // Validate and verify event data
@@ -27,7 +38,11 @@ export function auth(authKey: string, data: Event, ws: ServerWebSocket<WSData>) 
     }
 
     // Check if pubkey is authorized
-    if (!authorizedKeys.includes(data.pubkey) && !privateKeys[data.pubkey] && !config.noscraper) {
+    if (
+      !authorizedKeys.includes(data.pubkey) &&
+      !privateKeys[data.pubkey] &&
+      !config.noscraper
+    ) {
       throw new Error("Unauthorized.");
     }
 
