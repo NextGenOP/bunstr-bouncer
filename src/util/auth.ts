@@ -1,4 +1,4 @@
-import { validateEvent, verifyEvent, nip19 } from "nostr-tools";
+import { validateEvent, verifyEvent } from "nostr-tools";
 import config from "../config";
 import {
   decodenpubKeysFromArray,
@@ -22,7 +22,7 @@ export function auth(
   authKey: string,
   data: Event,
   ws: ServerWebSocket<WSData>
-) {
+): boolean {
   try {
     // Check if authorized_keys, private_keys are empty and noscraper flag is set
     if (
